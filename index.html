@@ -71,8 +71,12 @@
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 12px;
-            border-left: 4px solid var(--accent-color);
+            border-left: 4px solid #444;
         }
+        .exercise-row.strength { border-left-color: var(--accent-color); }
+        .exercise-row.core { border-left-color: #a55eea; }
+        .exercise-row.utility { border-left-color: #778ca3; }
+        
         .exec-header {
             display: flex;
             justify-content: space-between;
@@ -80,8 +84,9 @@
             width: 100%;
         }
         .exec-info { font-weight: 600; color: #fff; }
-        .exec-target { font-size: 12px; color: #888; }
-        .input-group { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+        .exec-target { font-size: 12px; color: #aaacbe; margin-top: 2px; }
+        .input-group { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+        
         input[type="number"] {
             width: 65px;
             padding: 8px;
@@ -192,26 +197,39 @@
 <script>
     const GOOGLE_API_URL = "https://script.google.com/macros/s/AKfycbxf4I66vmBuocHqrrwMyNMsEWV2DMuWO67DJ2HFk_lNBpu7Zfoatpgx_NTv8mDsqOT_8Q/exec";
 
-    // Setup base routines calibrated to your 14-pushup capability
+    // Reconstructing your absolute layout maps cleanly divided by mechanical type
     const dataset = {
         A: [
-            { name: "Regular Push-Ups", base: "3 Sets x 10-12 Reps", anim: "pushup" },
-            { name: "Regular Bodyweight Squats", base: "3 Sets x 15-20 Reps", anim: "squat" },
-            { name: "Wide Grip Push-Ups", base: "3 Sets x 8-10 Reps", anim: "pushup" },
-            { name: "Lateral Side Lunges", base: "3 Sets x 6 Reps/Side", anim: "squat" }
+            { name: "1. High Knees", target: "30 Seconds", type: "utility",inputType: "none", anim: "none" },
+            { name: "2. Regular Push-Ups", target: "3 Sets x 10-12 Reps (Go to knees if execution breaks)", type: "strength", inputType: "triple", anim: "pushup" },
+            { name: "3. Regular Squats", target: "3 Sets x 15-20 Reps (Deep cadence execution)", type: "strength", inputType: "triple", anim: "squat" },
+            { name: "4. Wide Push-Ups", target: "3 Sets x 8-10 Reps", type: "strength", inputType: "triple", anim: "pushup" },
+            { name: "5. Side Lunges", target: "3 Sets x 12 Reps Total (6 per side)", type: "strength", inputType: "triple", anim: "squat" },
+            { name: "6. Abdominal Crunches", target: "2 Sets x 15 Reps", type: "core", inputType: "double", anim: "none" },
+            { name: "7. Leg Raises", target: "2 Sets x 12 Reps", type: "core", inputType: "double", anim: "none" },
+            { name: "8. Single-Leg Glute Bridge (Left)", target: "2 Sets x 10 Reps", type: "core", inputType: "double", anim: "none" },
+            { name: "9. Single-Leg Glute Bridge (Right)", target: "2 Sets x 10 Reps", type: "core", inputType: "double", anim: "none" },
+            { name: "10. Hyperextensions", target: "2 Sets x 12 Reps", type: "core", inputType: "double", anim: "none" },
+            { name: "11. Cobra Stretch", target: "30 Second Hold", type: "utility", inputType: "none", anim: "none" }
         ],
         B: [
-            { name: "Vertical Pike Push-Ups", base: "3 Sets x 8-10 Reps", anim: "pushup" },
-            { name: "Elevated Bulgarian Split Squats", base: "3 Sets x 10 Reps/Leg", anim: "squat" },
-            { name: "Close Diamond Push-Ups", base: "3 Sets x 6-8 Reps", anim: "pushup" },
-            { name: "Static Forearm Plank", base: "2 Sets x 30-45 Secs", anim: "none" }
+            { name: "1. Jumping Jacks", target: "30 Seconds Warm-Up", type: "utility", inputType: "none", anim: "none" },
+            { name: "2. Vertical Pike Push-Ups", target: "3 Sets x 8-10 Reps (Shoulder builder)", type: "strength", inputType: "triple", anim: "pushup" },
+            { name: "3. Bulgarian Split Squats (Left)", target: "3 Sets x 10 Reps (Elevate rear foot)", type: "strength", inputType: "triple", anim: "squat" },
+            { name: "4. Bulgarian Split Squats (Right)", target: "3 Sets x 10 Reps", type: "strength", inputType: "triple", anim: "squat" },
+            { name: "5. Diamond Push-Ups", target: "3 Sets x 6-8 Reps (Tricep selector)", type: "strength", inputType: "triple", anim: "pushup" },
+            { name: "6. Bicycle Crunches", target: "2 Sets x 20 Reps Total", type: "core", inputType: "double", anim: "none" },
+            { name: "7. Flutter Kicks", target: "2 Sets x 20 Reps Total", type: "core", inputType: "double", anim: "none" },
+            { name: "8. Static Forearm Plank", target: "2 Sets x 30-45 Second Holds", type: "core", inputType: "single-time", anim: "none" },
+            { name: "9. Superman Hold", target: "2 Sets x 12 Reps (2s pause at top)", type: "core", inputType: "double", anim: "none" },
+            { name: "10. Child's Pose Stretch", target: "30 Second Hold", type: "utility", inputType: "none", anim: "none" },
+            { name: "11. Seated Hamstring Stretch", target: "30 Second Hold", type: "utility", inputType: "none", anim: "none" }
         ]
     };
 
-    // Calculate a structured 4-day active matrix starting today (July 14, 2026)
+    // Auto layout tracking timeline initialization matrix
     const startDate = new Date(2026, 6, 14); 
-    const sequenceCycle = ["A", "B", "Rest", "A", "B", "Rest", "Rest"]; // 4 days active per week split layout
-    
+    const sequenceCycle = ["A", "B", "Rest", "A", "B", "Rest", "Rest"];
     let activeDayType = "Rest";
 
     function compileMatrixSchedule() {
@@ -222,7 +240,6 @@
             let iterationDate = new Date(startDate);
             iterationDate.setDate(startDate.getDate() + i);
             
-            // Determine structural routine assignment based on rotation index
             let cycleIndex = i % sequenceCycle.length;
             let type = sequenceCycle[cycleIndex];
             
@@ -266,21 +283,39 @@
                 animationElement = `<div class="squat-torso"></div><div class="squat-legs"></div><div class="floor"></div>`;
             }
 
+            // Generate contextual input templates based on metric parameters
+            let entryFields = "";
+            if (ex.inputType === "triple") {
+                entryFields = `
+                    <input type="number" id="ex-${idx}-s1" placeholder="Set 1" required>
+                    <input type="number" id="ex-${idx}-s2" placeholder="Set 2" required>
+                    <input type="number" id="ex-${idx}-s3" placeholder="Set 3" required>
+                `;
+            } else if (ex.inputType === "double") {
+                entryFields = `
+                    <input type="number" id="ex-${idx}-s1" placeholder="Set 1" required>
+                    <input type="number" id="ex-${idx}-s2" placeholder="Set 2" required>
+                `;
+            } else if (ex.inputType === "single-time") {
+                entryFields = `
+                    <input type="number" id="ex-${idx}-s1" style="width:110px;" placeholder="Hold (Secs)" required>
+                `;
+            } else {
+                entryFields = `<span style="color:#6e6e80; font-size:12px;">✅ Read instructions, no tracking input metrics needed</span>`;
+            }
+
             space.innerHTML += `
-                <div class="exercise-row">
+                <div class="exercise-row ${ex.type}">
                     <div class="exec-header">
                         <div>
                             <div class="exec-info">${ex.name}</div>
-                            <div class="exec-target">Baseline Target: ${ex.base}</div>
+                            <div class="exec-target">Target: ${ex.target}</div>
                         </div>
                         ${ex.anim !== 'none' ? `<button type="button" class="anim-btn" onclick="toggleAnimationVisual(${idx})">Form Preview ℹ️</button>` : ''}
                     </div>
                     <div class="anim-viewport" id="anim-${idx}">${animationElement}</div>
                     <div class="input-group">
-                        <label style="font-size: 13px;">Log Actual Reps Achieved Across Your 3 Sets:</label>
-                        <input type="number" id="s1-${idx}" placeholder="S1" required>
-                        <input type="number" id="s2-${idx}" placeholder="S2" required>
-                        <input type="number" id="s3-${idx}" placeholder="S3" required>
+                        ${entryFields}
                     </div>
                 </div>
             `;
@@ -302,22 +337,28 @@
         let validationCheck = true;
 
         dataset[activeDayType].forEach((ex, idx) => {
-            const s1 = document.getElementById(`s1-${idx}`).value;
-            const s2 = document.getElementById(`s2-${idx}`).value;
-            const s3 = document.getElementById(`s3-${idx}`).value;
+            if (ex.inputType === "none") return; // Skip metrics mapping for warm-ups/stretches
 
-            if(!s1 || !s2 || !s3) {
+            const s1 = document.getElementById(`ex-${idx}-s1`).value;
+            const s2 = ex.inputType === "triple" || ex.inputType === "double" ? document.getElementById(`ex-${idx}-s2`).value : null;
+            const s3 = ex.inputType === "triple" ? document.getElementById(`ex-${idx}-s3`).value : null;
+
+            if (!s1 || (ex.inputType === "double" && !s2) || (ex.inputType === "triple" && (!s2 || !s3))) {
                 validationCheck = false;
             }
 
+            let formatString = `S1:${s1}`;
+            if(s2) formatString += ` S2:${s2}`;
+            if(s3) formatString += ` S3:${s3}`;
+
             loggedExercises.push({
                 name: ex.name,
-                reps: `S1:${s1} S2:${s2} S3:${s3}`
+                reps: formatString
             });
         });
 
         if(!validationCheck) {
-            alert("Please complete the entry fields for all active workflow sets.");
+            alert("Please complete all numeric logging inputs before transmission submission.");
             return;
         }
 
@@ -334,7 +375,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(transmissionPayload)
             });
-            alert("Workout logs successfully dispatched to cloud database! Keep raising the rep ceiling next session.");
+            alert("Workout telemetry successfully dispatched to cloud database! Keep raising the ceiling next session.");
             document.getElementById('logForm').reset();
         } catch (err) {
             alert("Error dispatching system payload. Inspect network logs.");
