@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riddhi's Dev-Fit Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0f0f12;
+            --card-bg: #16161e;
+            --accent-color: #00f2fe;
+            --text-color: #c5c5d2;
+            --rest-color: #ffb142;
+            --work-color: #2ed573;
+        }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 650px;
+            width: 100%;
+        }
+        h1 { color: #fff; text-align: center; font-size: 24px; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: var(--accent-color); margin-top: 0; font-size: 14px; letter-spacing: 1px; }
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            border: 1px solid #222230;
+        }
+        h2 { color: #fff; font-size: 18px; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Schedule Matrix UI */
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .matrix-day {
+            background: #1e1e2f;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            border: 1px solid #2a2a40;
+        }
+        .matrix-day.today { border: 2px solid var(--accent-color); background: #1a2a3a; }
+        .day-label { font-weight: bold; margin-bottom: 4px; font-size: 11px; }
+        .type-label { font-size: 12px; font-weight: bold; }
+        .type-A { color: var(--work-color); }
+        .type-B { color: #a55eea; }
+        .type-Rest { color: var(--rest-color); }
+
+        /* Exercise List & Form Inputs */
+        .exercise-row {
+            display: flex;
+            flex-direction: column;
+            background: #1e1e2f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #444;
+        }
+        .exercise-row.strength { border-left-color: var(--accent-color); }
+        .exercise-row.core { border-left-color: #a55eea; }
+        .exercise-row.utility { border-left-color: #778ca3; }
+        
+        .exec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .exec-info { font-weight: 600; color: #fff; }
+        .exec-target { font-size: 12px; color: #aaacbe; margin-top: 2px; }
+        .input-group { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+        
+        input[type="number"] {
+            width: 65px;
+            padding: 8px;
+            background: #121214;
+            border: 1px solid #3a3a50;
+            color: #fff;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .anim-btn {
+            background: #2a2a40;
+            color: var(--accent-color);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        /* CSS Animations Canvas */
+        .anim-viewport {
+            height: 80px;
+            background: #0b0b0d;
+            margin-top: 10px;
+            border-radius: 6px;
+            display: none;
+            position: relative;
+            overflow: hidden;
+            border: 1px dashed #333;
+        }
+        .floor { position: absolute; bottom: 15px; width: 100%; height: 2px; background: #555; }
+        
+        /* Push Up Animation */
+        .pushup-body {
+            position: absolute; width: 50px; height: 6px; background: var(--accent-color);
+            bottom: 30px; left: calc(50% - 25px); border-radius: 3px;
+            transform-origin: right center;
+            animation: pushup-cycle 2s infinite ease-in-out;
+        }
+        @keyframes pushup-cycle {
+            0%, 100% { bottom: 30px; transform: rotate(0deg); }
+            50% { bottom: 17px; transform: rotate(-5deg); }
+        }
+
+        /* Squat Animation */
+        .squat-torso {
+            position: absolute; width: 6px; height: 24px; background: var(--accent-color);
+            bottom: 32px; left: 50%; border-radius: 3px;
+            animation: squat-key 2s infinite ease-in-out;
+        }
+        .squat-legs {
+            position: absolute; width: 16px; height: 6px; background: #fff;
+            bottom: 26px; left: calc(50% - 5px);
+            animation: squat-legs-key 2s infinite ease-in-out;
+        }
+        @keyframes squat-key {
+            0%, 100% { transform: translateY(0); height: 24px; }
+            50% { transform: translateY(10px); height: 18px; }
+        }
+        @keyframes squat-legs-key {
+            0%, 100% { transform: scaleX(1); }
+            50% { transform: scaleX(1.4) translateY(4px); }
+        }
+
+        /* Sync Button Layout */
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+            transition: 0.2s;
+        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 242, 254, 0.5); }
+        .meta-text { font-size: 12px; color: #6e6e80; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🥷 Riddhi's Dev-Fit Blueprint</h1>
+    <p class="subtitle">HEIGHT: 158CM | WEIGHT: 47KG | GOAL: PUSH-UP MASTERY & STRENGTH</p>
+
+    <!-- 30-Day Training Plan Matrix -->
+    <div class="card">
+        <h2>📅 30-Day Plan Sequence <span id="current-workout-badge" style="font-size:12px; padding:4px 8px; background:#222; border-radius:4px;"></span></h2>
+        <div class="matrix-grid" id="matrixContainer"></div>
+    </div>
+
+    <!-- Active Routine Log -->
+    <div class="card">
+        <h2 id="routine-title">Loading Today's Protocol...</h2>
+        <form id="logForm">
+            <div id="exerciseFormSpace"></div>
+            <button type="button" class="submit-btn" onclick="syncWorkoutToSheets()">Transmit Workout Data 🚀</button>
+            <div class="meta-text">Target parameters automatically scale up dynamically based on your submitted performance data.</div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const GOOGLE_API_URL = "https://script.google.com/macros/s/AKfycbwcI_gZahiq55JVOTf9os75y1sbtHhjrqPtSy5WP1q6GZQ9WTSjZHyYU57lzjXn2gYnFA/exec";
+
+    // Dataset adapted for progressive full body strength and push-up mastery
+    const dataset = {
+        A: [
+            { name: "1. High Knees", target: "45 Seconds Warm-Up", type: "utility", inputType: "none", anim: "none" },
+            { name: "2. Eccentric Full Push-Ups (3s lowering)", target: "3 Sets x 5 Reps (Slow lower from full plank)", type: "strength", inputType: "triple", anim: "pushup" },
+            { name: "3. Knee Push-Ups (Burnout)", target: "3 Sets x Max Reps", type: "strength", inputType: "triple", anim: "pushup" },
+            { name: "4. Pause Squats (1s hold bottom)", target: "3 Sets x 15 Reps", type: "strength", inputType: "triple", anim: "squat" },
+            { name: "5. Reverse / Jump Lunges", target: "3 Sets x 16 Reps Total", type: "strength", inputType: "triple", anim: "squat" },
+            { name: "6. Leg Raises", target: "3 Sets x 12-15 Reps", type: "core", inputType: "triple", anim: "none" },
+            { name: "7. Single-Leg Glute Bridges", target: "3 Sets x 10 Reps per leg", type: "core", inputType: "triple", anim: "none" },
+            { name: "8. Cobra Stretch", target: "30 Second Hold", type: "utility", inputType: "none", anim: "none" }
+        ],
+        B: [
+            { name: "1. Jumping Jacks", target: "45 Seconds Warm-Up", type: "utility", inputType: "none", anim: "none" },
+            { name: "2. Pike Push-Ups", target: "3 Sets x 8-10 Reps", type: "strength", inputType: "triple", anim: "pushup" },
+            { name: "3. Table Top / Inverted Rows", target: "3 Sets x 10-12 Reps", type: "strength", inputType: "triple", anim: "pushup" },
+            { name: "4. Bulgarian Split Squats", target: "3 Sets x 12 Reps per leg", type: "strength", inputType: "triple", anim: "squat" },
+            { name: "5. Incline Push-Ups", target: "3 Sets x 12-15 Reps", type: "strength", inputType: "triple", anim: "pushup" },
+            { name: "6. Bicycle Crunches", target: "3 Sets x 20 Reps Total", type: "core", inputType: "triple", anim: "none" },
+            { name: "7. Full Forearm Plank", target: "3 Sets x 30-45 Sec Holds", type: "core", inputType: "triple", anim: "none" },
+            { name: "8. Superman Hold", target: "3 Sets x 12 Reps (2s pause)", type: "core", inputType: "triple", anim: "none" },
+            { name: "9. Child's Pose Stretch", target: "30 Second Hold", type: "utility", inputType: "none", anim: "none" }
+        ]
+    };
+
+    const startDate = new Date();
+    const sequenceCycle = ["A", "B", "Rest", "A", "B", "Rest", "Rest"];
+    let activeDayType = "Rest";
+
+    function compileMatrixSchedule() {
+        const container = document.getElementById("matrixContainer");
+        const rightNow = new Date();
+        
+        for (let i = 0; i < 30; i++) {
+            let iterationDate = new Date(startDate);
+            iterationDate.setDate(startDate.getDate() + i);
+            
+            let cycleIndex = i % sequenceCycle.length;
+            let type = sequenceCycle[cycleIndex];
+            
+            let dateStr = iterationDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            let isToday = iterationDate.toDateString() === rightNow.toDateString();
+            
+            if (isToday) {
+                activeDayType = type;
+            }
+
+            container.innerHTML += `
+                <div class="matrix-day ${isToday ? 'today' : ''}">
+                    <div class="day-label">${dateStr}</div>
+                    <div class="type-label type-${type}">${type === 'Rest' ? '🛋️ Rest' : '⚡ Day ' + type}</div>
+                </div>
+            `;
+        }
+    }
+
+    function buildActiveWorkoutInterface() {
+        const title = document.getElementById("routine-title");
+        const space = document.getElementById("exerciseFormSpace");
+        const badge = document.getElementById("current-workout-badge");
+
+        badge.innerText = `TODAY: ${activeDayType === 'Rest' ? 'REST DAY' : 'WORKOUT ' + activeDayType}`;
+
+        if (activeDayType === "Rest") {
+            title.innerText = "🛋️ System Recovery Protocol";
+            space.innerHTML = `<p style="text-align:center; padding: 20px 0; color: var(--rest-color)">Muscle recovery and synthesis happens on rest days. Focus on light walking, stretching, staying hydrated, and sleeping well!</p>`;
+            return;
+        }
+
+        title.innerText = `🥷 Active Protocol: Workout ${activeDayType}`;
+        space.innerHTML = "";
+
+        dataset[activeDayType].forEach((ex, idx) => {
+            let animationElement = "";
+            if(ex.anim === "pushup") {
+                animationElement = `<div class="pushup-body"></div><div class="floor"></div>`;
+            } else if(ex.anim === "squat") {
+                animationElement = `<div class="squat-torso"></div><div class="squat-legs"></div><div class="floor"></div>`;
+            }
+
+            let entryFields = "";
+            if (ex.inputType === "triple") {
+                entryFields = `
+                    <input type="number" id="ex-${idx}-s1" placeholder="Set 1" required>
+                    <input type="number" id="ex-${idx}-s2" placeholder="Set 2" required>
+                    <input type="number" id="ex-${idx}-s3" placeholder="Set 3" required>
+                `;
+            } else if (ex.inputType === "double") {
+                entryFields = `
+                    <input type="number" id="ex-${idx}-s1" placeholder="Set 1" required>
+                    <input type="number" id="ex-${idx}-s2" placeholder="Set 2" required>
+                `;
+            } else {
+                entryFields = `<span style="color:#6e6e80; font-size:12px;">✅ Read instructions, no tracking required</span>`;
+            }
+
+            space.innerHTML += `
+                <div class="exercise-row ${ex.type}">
+                    <div class="exec-header">
+                        <div>
+                            <div class="exec-info">${ex.name}</div>
+                            <div class="exec-target">Target: ${ex.target}</div>
+                        </div>
+                        ${ex.anim !== 'none' ? `<button type="button" class="anim-btn" onclick="toggleAnimationVisual(${idx})">Form Preview ℹ️</button>` : ''}
+                    </div>
+                    <div class="anim-viewport" id="anim-${idx}">${animationElement}</div>
+                    <div class="input-group">
+                        ${entryFields}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function toggleAnimationVisual(idx) {
+        const view = document.getElementById(`anim-${idx}`);
+        view.style.display = (view.style.display === "block") ? "none" : "block";
+    }
+
+    async function syncWorkoutToSheets() {
+        if (activeDayType === "Rest") {
+            alert("No training telemetry to transmit on scheduled rest cycles.");
+            return;
+        }
+
+        const loggedExercises = [];
+        let validationCheck = true;
+
+        dataset[activeDayType].forEach((ex, idx) => {
+            if (ex.inputType === "none") return;
+
+            const s1 = document.getElementById(`ex-${idx}-s1`).value;
+            const s2 = ex.inputType === "triple" || ex.inputType === "double" ? document.getElementById(`ex-${idx}-s2`).value : null;
+            const s3 = ex.inputType === "triple" ? document.getElementById(`ex-${idx}-s3`).value : null;
+
+            if (!s1 || (ex.inputType === "double" && !s2) || (ex.inputType === "triple" && (!s2 || !s3))) {
+                validationCheck = false;
+            }
+
+            let formatString = `S1:${s1}`;
+            if(s2) formatString += ` S2:${s2}`;
+            if(s3) formatString += ` S3:${s3}`;
+
+            loggedExercises.push({
+                name: ex.name,
+                reps: formatString
+            });
+        });
+
+        if(!validationCheck) {
+            alert("Please complete all numeric logging inputs before submission.");
+            return;
+        }
+
+        const transmissionPayload = {
+            date: new Date().toLocaleDateString('en-US', { year:'numeric', month:'2-digit', day:'2-digit' }),
+            workoutType: `Workout ${activeDayType}`,
+            exercises: loggedExercises
+        };
+
+        try {
+            await fetch(GOOGLE_API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(transmissionPayload)
+            });
+            alert("Workout telemetry successfully dispatched to cloud database! Keep pushing!");
+            document.getElementById('logForm').reset();
+        } catch (err) {
+            alert("Error dispatching system payload. Inspect network logs.");
+            console.error(err);
+        }
+    }
+
+    compileMatrixSchedule();
+    buildActiveWorkoutInterface();
+</script>
+</body>
+</html>
