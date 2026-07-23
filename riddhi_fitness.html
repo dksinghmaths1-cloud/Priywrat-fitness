@@ -222,13 +222,16 @@
         ]
     };
 
-    const startDate = new Date();
+    // HARDCODED START DATE: July 22, 2026 (Day 1 / Workout A)
+    const startDate = new Date(2026, 6, 22); 
     const sequenceCycle = ["A", "B", "Rest", "A", "B", "Rest", "Rest"];
     let activeDayType = "Rest";
 
     function compileMatrixSchedule() {
         const container = document.getElementById("matrixContainer");
         const rightNow = new Date();
+        
+        container.innerHTML = "";
         
         for (let i = 0; i < 30; i++) {
             let iterationDate = new Date(startDate);
@@ -358,10 +361,11 @@
         };
 
         try {
+            // Using text/plain ensures Apps Script doPost receives postData payload reliably across domains
             await fetch(GOOGLE_API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(transmissionPayload)
             });
             alert("Workout telemetry successfully dispatched to cloud database! Keep pushing!");
