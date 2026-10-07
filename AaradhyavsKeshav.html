@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>14-Round Chess Match Championship</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+  
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-border: #334155;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --win: #22c55e;
+      --draw: #eab308;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Scoreboard Header */
+    .scoreboard {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .player {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .player.right {
+      text-align: right;
+    }
+
+    .player-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .player-tag {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .score-badge {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 2.25rem;
+      font-weight: 800;
+      background: #0b1120;
+      padding: 8px 24px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+
+    .score-badge .score-accent {
+      color: var(--accent);
+    }
+
+    /* Match Info / Up Next */
+    .banner {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+
+    /* Main Match Layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 860px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Board Area */
+    .board-container {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    #board {
+      width: 420px;
+      max-width: 100%;
+    }
+
+    .board-nav {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    button {
+      background: #334155;
+      color: var(--text);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--accent);
+      color: #0b1120;
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .move-counter {
+      font-size: 0.9rem;
+      color: var(--muted);
+      min-height: 20px;
+    }
+
+    /* Rounds List */
+    .rounds-container {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .round-card {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+
+    .round-card:hover {
+      border-color: var(--accent);
+    }
+
+    .round-card.active {
+      border-color: var(--accent);
+      background: #1e3a5f;
+    }
+
+    .round-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .round-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .round-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge-completed {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--win);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .badge-upcoming {
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--muted);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .badge-live {
+      background: rgba(234, 179, 8, 0.15);
+      color: var(--draw);
+      border: 1px solid rgba(234, 179, 8, 0.3);
+    }
+
+    #loading {
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Tournament Banner -->
+    <div class="scoreboard">
+      <div class="player">
+        <span class="player-tag">Player 1</span>
+        <span class="player-name" id="p1-name">KeshavPc23</span>
+      </div>
+      <div class="score-badge">
+        <span id="p1-score">0</span>
+        <span class="score-accent">-</span>
+        <span id="p2-score">0</span>
+      </div>
+      <div class="player right">
+        <span class="player-tag">Player 2</span>
+        <span class="player-name" id="p2-name">Aaradhya_Singh001</span>
+      </div>
+    </div>
+
+    <!-- Match Status Bar -->
+    <div class="banner">
+      <span id="match-status-text">Checking schedule...</span>
+      <span id="active-game-label" style="font-weight: 600;"></span>
+    </div>
+
+    <div class="main-grid">
+      <!-- Left: Interactive Board -->
+      <div class="board-container">
+        <div id="board"></div>
+        <div class="move-counter" id="move-counter">Move: 0 / 0</div>
+        <div class="board-nav">
+          <button id="btn-start">|&lt;</button>
+          <button id="btn-prev">&lt;</button>
+          <button id="btn-next">&gt;</button>
+          <button id="btn-end">&gt;|</button>
+          <button id="btn-flip">Flip</button>
+        </div>
+      </div>
+
+      <!-- Right: All 14 Rounds -->
+      <div class="rounds-container" id="rounds-list">
+        <div id="loading">Loading match data from Google Sheets...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwumlCdMfp3c0jqJW34JpkvBtVs7yDvnpmxXiMxKt2hOYL1lJmI5ZbHqaq_N_il649oTw/exec";
+
+    let roundsData = [];
+    let board = null;
+    let game = new Chess();
+    let moveHistory = [];
+    let currentMoveIndex = 0;
+
+    board = Chessboard('board', {
+      position: 'start',
+      showNotation: true,
+      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    });
+
+    $(window).resize(board.resize);
+
+    async function loadTournamentData() {
+      try {
+        const response = await fetch(SCRIPT_URL);
+        roundsData = await response.json();
+        
+        renderScores();
+        renderRoundsList();
+        selectDefaultRound();
+      } catch (err) {
+        document.getElementById('loading').innerHTML = `Failed to load match data.<br><small style="color:#ef4444">${err.message}</small>`;
+      }
+    }
+
+    function renderScores() {
+      let p1 = "KeshavPc23";
+      let p2 = "Aaradhya_Singh001";
+      let score1 = 0;
+      let score2 = 0;
+
+      roundsData.forEach(r => {
+        const res = (r.result || "").trim();
+        const white = (r.white || "").trim();
+        
+        if (res === "1-0") {
+          if (white === p1) score1 += 1; else score2 += 1;
+        } else if (res === "0-1") {
+          if (white === p1) score2 += 1; else score1 += 1;
+        } else if (res === "1/2-1/2" || res === "0.5-0.5") {
+          score1 += 0.5;
+          score2 += 0.5;
+        }
+      });
+
+      document.getElementById('p1-score').textContent = score1;
+      document.getElementById('p2-score').textContent = score2;
+    }
+
+    function renderRoundsList() {
+      const container = document.getElementById('rounds-list');
+      container.innerHTML = "";
+
+      let nextUpcoming = roundsData.find(r => (r.status || "").toLowerCase().includes("upcoming"));
+      if (nextUpcoming) {
+        document.getElementById('match-status-text').textContent = 
+          `Next: Round ${nextUpcoming.round} • ${nextUpcoming.white} vs ${nextUpcoming.black} (${nextUpcoming.date || 'TBD'})`;
+      } else {
+        document.getElementById('match-status-text').textContent = "All 14 rounds completed.";
+      }
+
+      roundsData.forEach((r, idx) => {
+        const status = (r.status || "Upcoming").trim();
+        const statusClass = status.toLowerCase().includes("comp") ? "badge-completed" : 
+                            status.toLowerCase().includes("live") ? "badge-live" : "badge-upcoming";
+
+        const card = document.createElement('div');
+        card.className = `round-card`;
+        card.id = `round-card-${idx}`;
+        card.onclick = () => loadGame(idx);
+
+        card.innerHTML = `
+          <div class="round-info">
+            <span class="round-title">Round ${r.round}: ${r.white} vs ${r.black}</span>
+            <span class="round-sub">${r.date ? r.date + ' • ' : ''}${r.result || 'Not played'}</span>
+          </div>
+          <span class="badge ${statusClass}">${status}</span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function selectDefaultRound() {
+      let idx = roundsData.findLastIndex(r => (r.status || "").toLowerCase().includes("comp"));
+      if (idx === -1) idx = 0;
+      loadGame(idx);
+    }
+
+    function loadGame(index) {
+      document.querySelectorAll('.round-card').forEach(el => el.classList.remove('active'));
+      const activeCard = document.getElementById(`round-card-${index}`);
+      if (activeCard) activeCard.classList.add('active');
+
+      const match = roundsData[index];
+      document.getElementById('active-game-label').textContent = 
+        `Viewing Round ${match.round} (${match.white} vs ${match.black})`;
+
+      game.reset();
+      moveHistory = [];
+      currentMoveIndex = 0;
+
+      if (match.pgn && match.pgn.trim() !== "") {
+        game.load_pgn(match.pgn);
+        moveHistory = game.history();
+        game.reset();
+      }
+
+      board.position('start');
+      updateBoardView();
+    }
+
+    function updateBoardView() {
+      board.position(game.fen());
+      document.getElementById('move-counter').textContent = 
+        moveHistory.length > 0 
+          ? `Move ${currentMoveIndex} / ${moveHistory.length}` 
+          : `No moves available for this round.`;
+
+      document.getElementById('btn-prev').disabled = (currentMoveIndex === 0);
+      document.getElementById('btn-start').disabled = (currentMoveIndex === 0);
+      document.getElementById('btn-next').disabled = (currentMoveIndex >= moveHistory.length);
+      document.getElementById('btn-end').disabled = (currentMoveIndex >= moveHistory.length);
+    }
+
+    // Board Nav Actions
+    document.getElementById('btn-next').onclick = () => {
+      if (currentMoveIndex < moveHistory.length) {
+        game.move(moveHistory[currentMoveIndex]);
+        currentMoveIndex++;
+        updateBoardView();
+      }
+    };
+
+    document.getElementById('btn-prev').onclick = () => {
+      if (currentMoveIndex > 0) {
+        game.undo();
+        currentMoveIndex--;
+        updateBoardView();
+      }
+    };
+
+    document.getElementById('btn-start').onclick = () => {
+      game.reset();
+      currentMoveIndex = 0;
+      updateBoardView();
+    };
+
+    document.getElementById('btn-end').onclick = () => {
+      while (currentMoveIndex < moveHistory.length) {
+        game.move(moveHistory[currentMoveIndex]);
+        currentMoveIndex++;
+      }
+      updateBoardView();
+    };
+
+    document.getElementById('btn-flip').onclick = () => {
+      board.flip();
+    };
+
+    loadTournamentData();
+  </script>
+</body>
+</html>
